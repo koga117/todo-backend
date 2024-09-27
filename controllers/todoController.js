@@ -4,7 +4,8 @@ const dynamoService = require('../services/dynamoService');
 exports.createTodo = async (req, res) => {
   try {
     const {name, completed } = req.body;
-    const todoItem = { id: uuidv4(), name, completed: completed || false };
+    const userId = req.userId;
+    const todoItem = { id: uuidv4(), name, completed: completed || false, userId };
     await dynamoService.createTodoItem(todoItem);
     res.status(201).json({ message: 'Todo item created successfully', todoItem });
   } catch (error) {
@@ -12,12 +13,19 @@ exports.createTodo = async (req, res) => {
   }
 };
 
-exports.getTodos = async (req, res) => {
+exports.getTodosByUserId = async (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+  }
+
   try {
-    const data = await dynamoService.getTodoItems();
-    res.status(200).json(data.Items);
+      const result = await dynamoService.getTodoItemsByUserId(userId);
+      res.status(200).json(result.Items);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching todo items', error });
+      console.error('Error fetching tasks:', error);
+      res.status(500).json({ message: 'Error fetching tasks' });
   }
 };
 
